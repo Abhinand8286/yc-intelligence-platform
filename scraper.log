@@ -1,0 +1,12 @@
+2025-12-29 10:06:58,434 - Starting production scrape run...
+2025-12-29 10:06:59,598 - Page 0: Fetched in 720.79ms. Processed 100 companies.
+2025-12-29 10:07:00,101 - Page 1: Fetched in 246.51ms. Processed 100 companies.
+2025-12-29 10:07:00,609 - Page 2: Fetched in 241.47ms. Processed 100 companies.
+2025-12-29 10:07:01,729 - Page 3: Fetched in 863.68ms. Processed 100 companies.
+2025-12-29 10:07:02,194 - Page 4: Fetched in 209.21ms. Processed 100 companies.
+2025-12-29 10:07:02,691 - Page 5: Fetched in 234.05ms. Processed 100 companies.
+2025-12-29 10:07:03,169 - Page 6: Fetched in 221.39ms. Processed 100 companies.
+2025-12-29 10:07:03,649 - Page 7: Fetched in 219.25ms. Processed 100 companies.
+2025-12-29 10:07:04,110 - Page 8: Fetched in 211.76ms. Processed 100 companies.
+2025-12-29 10:07:04,589 - Page 9: Fetched in 224.23ms. Processed 100 companies.
+2025-12-29 10:07:05,000 - Cleanup: Marked UPDATE 2 companies as inactive.
