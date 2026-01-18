@@ -87,10 +87,21 @@ export default function Home() {
           <p className="text-gray-500 mt-2">Tracking {companies.length > 0 ? '1000+' : '...'} companies</p>
         </div>
         <div className="flex gap-4">
-           <Link href="/analytics" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+          <Link
+            href="/analytics"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
             📊 Global Analytics
           </Link>
+
+          <Link
+            href="/ai"
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+          >
+            🤖 AI Intelligence
+          </Link>
         </div>
+
       </div>
 
       {/* Top Chart Section */}
