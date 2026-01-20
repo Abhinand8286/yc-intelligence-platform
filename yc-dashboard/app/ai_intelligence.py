@@ -1,51 +1,79 @@
-from openai import OpenAI
-import os
+import requests
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL = "phi3"   # low RAM, fast, self-hosted
 
 def generate_company_explanation(company, changes, scores, question):
     """
-    Safe AI summary generator.
-    Returns None if API key is missing or AI fails.
+    Self-hosted LLM using Ollama (phi3)
+    RAG via prompt injection
+    NO external APIs
     """
 
-    if not os.getenv("OPENAI_API_KEY"):
-        return None  # 🔒 LLM disabled safely
+    # ---------- Format changes cleanly ----------
+    if changes:
+        changes_text = "\n".join(
+            f"- {c['change_type']}: {c['old_value']} → {c['new_value']}"
+            for c in changes
+        )
+    else:
+        changes_text = "No recent changes."
 
+    # ---------- Safe score access ----------
+    momentum = scores.get("momentum_score", "N/A") if scores else "N/A"
+    stability = scores.get("stability_score", "N/A") if scores else "N/A"
+
+    # ---------- RAG Prompt ----------
     prompt = f"""
-Company Name: {company.get('name')}
-Description: {company.get('description')}
-Stage: {company.get('stage')}
-Tags: {company.get('tags')}
+You are an internal AI analyst for a YC company intelligence system.
+
+Company Name:
+{company.get('name')}
+
+Description:
+{company.get('description')}
+
+Stage:
+{company.get('stage')}
+
+Tags:
+{company.get('tags')}
 
 Recent Changes:
-{changes}
+{changes_text}
 
 Scores:
-Momentum: {scores.get('momentum')}
-Stability: {scores.get('stability')}
+- Momentum: {momentum}
+- Stability: {stability}
 
 User Question:
-{question}
+"{question}"
 
-Task:
-Answer the user's question using ONLY the provided company data.
-Be factual and concise.
-If the data does not contain the answer, say "Not enough data available."
+Rules:
+- Use ONLY the information above
+- Do NOT guess or hallucinate
+- Be factual and concise
+- Answer in 3–5 sentences
 """
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a data analyst summarizing YC companies."},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.5,
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
         )
 
-        return response.choices[0].message.content.strip()
+        if response.status_code != 200:
+            print("Ollama HTTP error:", response.text)
+            return None
+
+        data = response.json()
+        return data.get("response", "").strip() or None
 
     except Exception as e:
-        print("AI Error:", e)
+        print("Ollama execution error:", e)
         return None

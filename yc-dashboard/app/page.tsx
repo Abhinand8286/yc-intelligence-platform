@@ -98,7 +98,7 @@ export default function Home() {
             href="/ai"
             className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
           >
-            🤖 AI Intelligence
+            🤖 AI Bot
           </Link>
         </div>
 

@@ -47,7 +47,6 @@ async def explain_company(company_id: int, payload: ExplainRequest):
             WHERE company_id = $1
         """, company_id)
 
-    #  CALL AI DIRECTLY — NO MANUAL DISABLE SWITCH
     explanation = generate_company_explanation(
         company=dict(company),
         changes=[dict(c) for c in changes],
@@ -56,9 +55,8 @@ async def explain_company(company_id: int, payload: ExplainRequest):
     )
 
     if not explanation:
-        raise HTTPException(
-            status_code=500,
-            detail="AI failed to generate explanation"
-        )
+        return {
+            "answer": "AI could not generate an explanation at this time."
+        }
 
     return {"answer": explanation}

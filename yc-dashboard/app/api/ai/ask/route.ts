@@ -1,19 +1,8 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
-import OpenAI from "openai";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { companyId, question } = body;
+    const { companyId, question } = await req.json();
 
     if (!companyId || !question) {
       return NextResponse.json(
@@ -22,96 +11,34 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fetch company
-    const companyRes = await pool.query(
-      `
-      SELECT c.name, s.description
-      FROM companies c
-      JOIN company_snapshots s ON s.company_id = c.id
-      WHERE c.id = $1
-      ORDER BY s.scraped_at DESC
-      LIMIT 1
-      `,
-      [companyId]
+    // 🔁 Proxy request to FastAPI (Ollama + RAG lives there)
+    const res = await fetch(
+      `http://127.0.0.1:8000/api/companies/${companyId}/explain`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question }),
+      }
     );
 
-    if (companyRes.rows.length === 0) {
+    if (!res.ok) {
+      const errText = await res.text();
       return NextResponse.json(
-        { error: "Company not found" },
-        { status: 404 }
+        { error: errText || "AI service failed" },
+        { status: res.status }
       );
     }
 
-    const company = companyRes.rows[0];
-
-    // Fetch changes
-    const changesRes = await pool.query(
-      `
-      SELECT change_type, old_value, new_value
-      FROM company_changes
-      WHERE company_id = $1
-      ORDER BY detected_at DESC
-      LIMIT 5
-      `,
-      [companyId]
-    );
-
-    // Fetch scores
-    const scoresRes = await pool.query(
-      `
-      SELECT momentum_score, stability_score
-      FROM company_scores
-      WHERE company_id = $1
-      `,
-      [companyId]
-    );
-
-    const scores = scoresRes.rows[0];
-
-    const prompt = `
-You are an analyst assistant for a YC company intelligence system.
-
-Company Name:
-${company.name}
-
-Company Description:
-${company.description}
-
-Recent Changes:
-${
-  changesRes.rows.length === 0
-    ? "No recent changes."
-    : changesRes.rows
-        .map(
-          (c) => `- ${c.change_type}: ${c.old_value} → ${c.new_value}`
-        )
-        .join("\n")
-}
-
-Scores:
-- Momentum: ${scores?.momentum_score ?? "N/A"}
-- Stability: ${scores?.stability_score ?? "N/A"}
-
-User Question:
-"${question}"
-
-Rules:
-- Do not invent facts
-- Answer in 4–6 sentences
-`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-    });
+    const data = await res.json();
 
     return NextResponse.json({
-      answer: completion.choices[0].message.content,
+      answer: data.answer,
     });
 
   } catch (err) {
-    console.error("AI ERROR:", err);
+    console.error("AI ROUTE ERROR:", err);
     return NextResponse.json(
       { error: "Failed to contact AI service." },
       { status: 500 }

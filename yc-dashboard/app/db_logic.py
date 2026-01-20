@@ -120,7 +120,7 @@ async def process_company_record(pool, company_data):
                     insight = "AI summary not available."
 
 
-                # ✅ SAFE AI INSERT
+                #  SAFE AI INSERT
                     await conn.execute("""
                         INSERT INTO company_ai_insights
                         (company_id, insight_type, content, model_name, snapshot_id)

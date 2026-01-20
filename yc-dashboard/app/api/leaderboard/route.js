@@ -1,15 +1,15 @@
-import { Client } from 'pg';
+import { Pool } from 'pg';
 import { NextResponse } from 'next/server';
 
-const client = new Client({
-  connectionString: 'postgresql://postgres:12341@localhost:5432/postgres',
+const pool = new Pool({
+  connectionString: process.env.DB_URL,
 });
-client.connect();
+pool.connect();
 
 export async function GET() {
   try {
     // 1️⃣ Top companies by momentum score
-    const topMomentum = await client.query(`
+    const topMomentum = await pool.query(`
       SELECT
         c.id,
         c.name,
@@ -22,7 +22,7 @@ export async function GET() {
     `);
 
     // 2️⃣ Most stable companies
-    const mostStable = await client.query(`
+    const mostStable = await pool.query(`
       SELECT
         c.id,
         c.name,
@@ -35,7 +35,7 @@ export async function GET() {
     `);
 
     // 3️⃣ Recently changed companies
-    const recentlyChanged = await client.query(`
+    const recentlyChanged = await pool.query(`
       SELECT DISTINCT ON (cc.company_id)
         c.id,
         c.name,
